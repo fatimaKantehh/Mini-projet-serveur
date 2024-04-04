@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualiseur de fichiers</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        /* Ajoutez vos styles personnalisés ici */
+        .header-color {
+            background-color: #FFC0CB; /* ou la couleur exacte que vous souhaitez pour le rose */
+        }
+
+        .content-color {
+            background-color: #d0b9ca; /* pour un fond blanc */
+            border: 1px solid #cac1c8; /* ajoute un contour subtil comme dans l'exemple de la deuxième image */
+            padding: 20px; /* ajoute de l'espace autour du contenu */
+            height: 1000px;
+        }
+
+        /* Style supplémentaire pour le titre pour le faire ressembler à la deuxième page */
+        h2 {
+            color: rgb(14, 14, 14); /* pour un texte de titre blanc */
+        }
+        #zone {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 30px;
+            height: 980px; /* Hauteur de la zone PDF */
+            overflow: scroll;
+            background-color: #fff; /* Couleur blanche */
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Ligne pour le formulaire -->
+        <div class="row">
+            <div class="col-md-12">
+                <h1 style="margin-left: 1000px;">Binevenue au Visualiseur de fichiers</h1>
+                <form id="file-request-form">
+                    <div class="form-group">
+                        <label for="filename"><h4>Entrez le nom du fichier ou repertoire de votre choix:</h4></label>
+                        <input type="text" id="filename" name="filepath" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><h5>Afficher le contenu</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.reload();"><h5>Actualiser</button>
+                  <!--  <button type="button" ><a href="menu.html" class="">Retour au menu</a></button> -->
+                </form>
+            </div>
+        </div>
+        <!-- Ligne pour le visualiseur de fichiers -->
+        <div id="zone">
+    
+            <div class="col-md-12 content-color">
+                <h1 style="margin-left: 1000px;"></h1>
+                <div id="file-content">
+                    <!-- Le contenu du fichier sera affiché ici -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fonction pour gérer la soumission du formulaire
+            document.getElementById('file-request-form').onsubmit = function(event) {
+                event.preventDefault(); // Empêche le formulaire de soumettre normalement
+                var fileName = document.getElementById('filename').value;
+                requestFile(fileName); // Appelle la fonction requestFile
+            };
+        });
+        
+        function handleResponse(response, fileName) {
+            // Gérer la réponse en fonction du type de fichier
+            if (fileName.match(/\.(jpg|jpeg|png)$/i)) {
+                // Traitement des images
+                document.getElementById('file-content').innerHTML = '<img src="' + URL.createObjectURL(response) + '" />';
+            } else if (fileName.endsWith('.pdf')) {
+                // Traitement des fichiers PDF
+                document.getElementById('file-content').innerHTML = '<iframe src="' + URL.createObjectURL(response) + '" width="100%" height="900px"></iframe>';
+            } else if (fileName.endsWith('.html') || fileName.endsWith('.txt') || fileName.endsWith('.py')) {
+                // Traitement des fichiers textuels (HTML, TXT, Python)
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('file-content').innerHTML = '<pre>' + e.target.result + '</pre>';
+                };
+                reader.readAsText(response);
+            } else if (fileName.endsWith('.mp4')) {
+                // Traitement des vidéos
+                var videoUrl = URL.createObjectURL(response);
+                var videoElement = document.createElement('video');
+                videoElement.src = videoUrl;
+                videoElement.controls = true;
+                videoElement.style.width = '100%';
+                document.getElementById('file-content').innerHTML = '';
+                document.getElementById('file-content').appendChild(videoElement);
+            } else {
+                // Traitement des formats non pris en charge
+                document.getElementById('file-content').innerHTML = '<p>Le format du fichier n\'est pas pris en charge pour l\'affichage.</p>';
+            }
+        }
+        
+        function attachDirectoryHandlers() {
+            // Attacher un gestionnaire de clic à tous les liens de répertoire
+            var directoryLinks = document.querySelectorAll('#file-content a');
+            directoryLinks.forEach(function(link) {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    // Appeler requestFile avec le chemin du répertoire
+                    requestFile(event.target.getAttribute('href'));
+                });
+            });
+        }
+        
+        function requestFile(filePath) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/montrer-contenu?filepath=' + encodeURIComponent(filePath), true);
+            xhr.responseType = 'blob'; // Supposons que toutes les réponses soient des blobs, sauf si c'est un répertoire
+        
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    // Détectez si la réponse est un répertoire en recherchant un marqueur spécifique dans le HTML
+                    if (!filePath.includes('.') || filePath.endsWith('/')) {
+                        // Supposons qu'une réponse de répertoire ne contient pas de '.', ou se termine par '/'
+                        xhr.responseType = 'text'; // Changez le responseType car nous attendons du HTML
+                        handleDirectoryResponse(xhr.responseText);
+                    } else {
+                        // Autrement, c'est un fichier
+                        handleResponse(xhr.response, filePath);
+                    }
+                } else {
+                    // Gestion des erreurs HTTP autres que 200 OK
+                    document.getElementById('file-content').innerHTML = '<p>Erreur lors du chargement. Statut: ' + xhr.status + '</p>';
+                }
+            };
+        
+            xhr.onerror = function() {
+                // Gestion des erreurs de réseau
+                document.getElementById('file-content').innerHTML = '<p>Erreur de réseau.</p>';
+            };
+        
+            xhr.send();
+        }
+        
+        
+    </script>
+        
+        
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>
