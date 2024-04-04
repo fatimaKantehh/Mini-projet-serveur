@@ -1,0 +1,15 @@
+Jouer 	Temps 	Temperature	Humidite	Venteux
+Non	Ensoleille	Chaud	Elevee	Faux 
+Non	Ensoleille	Chaud	Elevee	Vrai 
+Oui	Couvert	Chaud	Elevee	Faux 
+Oui	Pluvieux	Doux	Elevee	Faux 
+Oui	Pluvieux	Frais	Normale	Faux 
+Non	Pluvieux	Frais	Normale	Vrai 
+Oui	Couvert	Frais	Normale	Vrai 
+Non	Ensoleille	Doux	Elevee	Faux 
+Oui	Ensoleille	Frais	Normale	Faux 
+Oui	Pluvieux	Doux	Normale	Faux 
+Oui	Ensoleille	Doux	Normale	Vrai 
+Oui	Couvert	Doux	Elevee	Vrai 
+Oui	Couvert	Chaud	Normale	Faux 
+Non	Pluvieux 	Doux	Elevee	Vrai 
